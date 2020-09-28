@@ -1,2 +1,7 @@
 # Project exclude paths
 /target/
+/.idea/
+/智能保全/
+/db
+/db.mv.db
+/db.trace.db
