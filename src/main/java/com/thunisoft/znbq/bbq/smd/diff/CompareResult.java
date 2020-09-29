@@ -4,8 +4,7 @@ import com.thunisoft.znbq.bbq.smd.generator.SqlGenerator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
@@ -60,34 +59,37 @@ public class CompareResult {
      */
     public String generateScript(SqlGenerator generator){
         List<Table> incrTables = getIncrTables();
-        String src = "script/"+Thread.currentThread().getId()+"_"+System.currentTimeMillis();
+        String src = "script/"+Thread.currentThread().getId()+"/"+System.currentTimeMillis();
         File dir = new File(src);
         if (dir.mkdirs()) {
             for (Table incrTable : incrTables) {
                 String sql = generator.create(incrTable);
                 String tableName = incrTable.getTableName();
                 File f = new File(src+"/01_CT_"+tableName+".sql");
-                writeString(sql, f);
+                writeString(sql, f, generator.charset());
             }
 
-            ci(this::getIncrIndices, Index::getTableName, generator::create, src+"/03_CI");
-            ci(this::getIncrColumns, Column::getTableName, generator::create, src+"/02_CC");
+            ci(this::getIncrIndices, Index::getTableName, generator::create,
+                    src+"/03_CI", generator::charset);
+            ci(this::getIncrColumns, Column::getTableName, generator::create,
+                    src+"/02_CC", generator::charset);
         }
         return src;
     }
 
-    private <T> void ci(Supplier<List<T>> listSupplier, Function<T, String> grouping, Function<T, String> generator, String perfix) {
+    private <T> void ci(Supplier<List<T>> listSupplier, Function<T, String> grouping,
+                        Function<T, String> generator, String perfix, Supplier<String> charSet) {
         listSupplier.get().stream()
                 .collect(Collectors.groupingBy(grouping))
                 .forEach((k, v)->{
-                    String sql = v.stream().map(generator).collect(Collectors.joining("%n"));
+                    String sql = v.stream().map(generator).collect(Collectors.joining("\n"));
                     File f = new File(perfix+"_"+k+".sql");
-                    writeString(sql, f);
+                    writeString(sql, f, charSet.get());
                 });
     }
 
-    private void writeString(String sql, File f) {
-        try (FileWriter writer = new FileWriter(f)) {
+    private void writeString(String sql, File f, String charSet) {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(f), charSet)) {
             writer.write(sql);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

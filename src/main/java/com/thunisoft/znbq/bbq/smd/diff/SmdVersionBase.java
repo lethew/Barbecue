@@ -72,7 +72,7 @@ public class SmdVersionBase {
                         .map(table -> {
                             boolean r = table.getColumns().add(column);
                             column.setTableCat(table.getCatalog());
-                            return r;
+                            return !r;
                         })
                         .orElse(Boolean.FALSE);
                 fill(workbook.getSheet("COL"), columnMap, Column::parse, columnBefore);

@@ -13,6 +13,11 @@ import com.thunisoft.znbq.bbq.smd.diff.Table;
  */
 public interface SqlGenerator {
     /**
+     * 生成文件字符集
+     * @return Sybase:GBK, Abase:utf-8
+     */
+    String charset();
+    /**
      * 生成建表语句
      * @param table 表信息
      * @return 建表语句
@@ -27,7 +32,7 @@ public interface SqlGenerator {
     String create(Column column);
 
     /**
-     * 生成新增索引语句
+     * 生成新增索引语句, 暂时不支持索引类型判断 fixme
      * @param index 索引信息
      * @return 新增索引语句
      */
@@ -40,10 +45,33 @@ public interface SqlGenerator {
      */
     static SqlGenerator getInstance(int type) {
         switch (DatabaseType.codeOf(type)) {
-            // 考虑单例模式
-            case SYBASE: return new SybaseSqlGenerator();
-            case ABASE: return new AbaseSqlGenerator();
+            case SYBASE: return SybaseSqlGenerator.INSTANCE;
+            case ABASE: return AbaseSqlGenerator.INSTANCE;
             default: return null;
         }
     }
+
+    default void datatType(Column column, StringBuilder builder) {
+        builder.append(column.getDataType());
+        if (column.getDataLength()>=0) {
+            builder.append('(').append(column.getDataLength());
+            if (column.getDataPrecision()>=0) {
+                builder.append(',').append(column.getDataPrecision());
+            }
+            builder.append(')');
+        }
+    }
+
+    default void columnLine(StringBuilder builder, Column column) {
+        builder.append('\t').append(column.getName()).append('\t');
+        datatType(column, builder);
+        builder.append('\t');
+        if (!column.isNullable()) {
+            builder.append("NULL");
+        } else {
+            builder.append("NOT NULL");
+        }
+        builder.append(",\t--").append(column.getRemark()).append('\n');
+    }
+
 }

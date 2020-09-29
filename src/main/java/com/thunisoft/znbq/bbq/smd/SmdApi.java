@@ -1,5 +1,6 @@
 package com.thunisoft.znbq.bbq.smd;
 
+import com.thunisoft.znbq.bbq.smd.consts.DatabaseType;
 import com.thunisoft.znbq.bbq.smd.diff.CompareResult;
 import com.thunisoft.znbq.bbq.smd.diff.SmdVersionBase;
 import com.thunisoft.znbq.bbq.smd.diff.VersionComparator;
@@ -49,5 +50,14 @@ public class SmdApi {
     public void downloadScript(DatabaseSnapshot snapshot, OutputStream outputStream) throws IOException {
         InputStream zip = ZipUtil.zip(new File(snapshot.getScriptPath()));
         IOUtils.copy(zip, outputStream);
+    }
+
+    public static void main(String[] args) {
+        SmdVersionBase np = new SmdVersionBase("D:\\Projects\\Barbecue\\智能保全\\Sybase\\2.5.10");
+        SmdVersionBase t3 = new SmdVersionBase("D:\\Projects\\Barbecue\\智能保全\\Abase\\3.1.7");
+        CompareResult compare = VersionComparator.compare(t3, np);
+        SqlGenerator sqlGenerator = SqlGenerator.getInstance(DatabaseType.SYBASE.getCode());
+        String path = compare.generateScript(sqlGenerator);
+        System.out.println(path);
     }
 }
