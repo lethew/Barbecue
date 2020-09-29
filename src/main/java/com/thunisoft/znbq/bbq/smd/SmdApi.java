@@ -3,11 +3,11 @@ package com.thunisoft.znbq.bbq.smd;
 import com.thunisoft.znbq.bbq.smd.diff.CompareResult;
 import com.thunisoft.znbq.bbq.smd.diff.SmdVersionBase;
 import com.thunisoft.znbq.bbq.smd.diff.VersionComparator;
-import com.thunisoft.znbq.bbq.smd.gen.SmdFileGen;
+import com.thunisoft.znbq.bbq.smd.generator.SmdFileGenerator;
 import com.thunisoft.znbq.bbq.smd.model.DatabaseInfo;
 import com.thunisoft.znbq.bbq.smd.model.DatabaseSnapshot;
 import com.thunisoft.znbq.bbq.smd.model.TableFilter;
-import com.thunisoft.znbq.bbq.smd.sql.SqlGenerator;
+import com.thunisoft.znbq.bbq.smd.generator.SqlGenerator;
 import com.thunisoft.znbq.bbq.util.ZipUtil;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.util.IOUtils;
@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -26,8 +25,8 @@ import java.util.List;
  */
 @UtilityClass
 public class SmdApi {
-    public DatabaseSnapshot createSmd(DatabaseSnapshot snapshot, DatabaseInfo databaseInfo, List<TableFilter> filters) throws SQLException, ClassNotFoundException {
-        String s = SmdFileGen.buildSmd(snapshot, databaseInfo, filters);
+    public DatabaseSnapshot createSmd(DatabaseSnapshot snapshot, DatabaseInfo databaseInfo, List<TableFilter> filters){
+        String s = SmdFileGenerator.buildSmd(snapshot, databaseInfo, filters);
         snapshot.setSmdPath(s);
         return snapshot;
     }

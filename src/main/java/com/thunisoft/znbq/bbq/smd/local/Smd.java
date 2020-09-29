@@ -5,12 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * TODO:
- *
  * @author <a href="mailto:wuzhao-1@thunisoft.com>Zhao.Wu</a>
  * @description com.thunisoft.znbq.bbq.smd Barbecue
  * @date 2020/9/28 0028 11:07
  */
+@Deprecated
 @Getter
 @AllArgsConstructor
 public enum Smd {

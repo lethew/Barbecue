@@ -1,6 +1,8 @@
 package com.thunisoft.znbq.bbq.smd.local;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -12,6 +14,8 @@ import java.util.List;
  * @date 2020/9/28 0028 10:20
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Group {
     private String path;
     private List<Table> tables;

@@ -1,9 +1,14 @@
 package com.thunisoft.znbq.bbq.smd.consts;
 
+import com.thunisoft.znbq.bbq.smd.model.DatabaseInfo;
+import com.thunisoft.znbq.bbq.util.ConnectionUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.SneakyThrows;
 
+import java.sql.Connection;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 
 /**
  *
@@ -17,11 +22,23 @@ public enum DatabaseType {
     /**
      * sybase
      */
-    SYBASE(1, "Sybase"),
+    SYBASE(1, "Sybase") {
+        @SneakyThrows
+        @Override
+        public void execute(DatabaseInfo info, Consumer<Connection> consumer) {
+            ConnectionUtil.sybase(info, consumer);
+        }
+    },
     /**
      * abase
      */
-    ABASE(2, "Abase");
+    ABASE(2, "Abase") {
+        @SneakyThrows
+        @Override
+        public void execute(DatabaseInfo info, Consumer<Connection> consumer) {
+            ConnectionUtil.abase(info, consumer);
+        }
+    };
 
     /**
      * 代码值
@@ -40,4 +57,10 @@ public enum DatabaseType {
         }
         throw new NoSuchElementException("不支持的数据库类型："+code);
     }
+
+    public static void executeConsumer(DatabaseInfo info, Consumer<Connection> consumer) {
+        codeOf(info.getDatabaseType()).execute(info, consumer);
+    }
+
+    public abstract void execute(DatabaseInfo info, Consumer<Connection> consumer);
 }

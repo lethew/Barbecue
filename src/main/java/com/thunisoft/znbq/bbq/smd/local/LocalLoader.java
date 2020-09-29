@@ -65,14 +65,6 @@ public class LocalLoader {
         return idxTotal.get(key);
     }
 
-    private static String line(String[] strs) {
-        StringBuilder builder = new StringBuilder();
-        for (String str : strs) {
-            builder.append(str).append("\t");
-        }
-        return builder.toString();
-    }
-
     private static Map<String, String[]> getStringMap(Workbook workbook, String sheetName, int s1, int j1, int i1, int i2) {
         Map<String, String[]> items = new TreeMap<>();
         Sheet tab = workbook.getSheet(sheetName);

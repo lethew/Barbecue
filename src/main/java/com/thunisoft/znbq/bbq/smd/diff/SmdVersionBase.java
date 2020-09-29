@@ -52,9 +52,19 @@ public class SmdVersionBase {
                 Workbook workbook = new HSSFWorkbook(inputStream);
                 fill(workbook.getSheet("TAB"), tableMap, Table::parse, t->true);
 
-                // fixme 索引组装有问题，需要考虑多字段索引，可以根据索引名进行判断
                 Function<Index, Boolean> indexBefore = index -> Optional.ofNullable(tableMap.get(index.getTableName()))
-                        .map(table -> table.getIndices().add(index))
+                        .map(table -> {
+                            boolean r = table.getIndices().add(index);
+                            if (r) {
+                                // 如果已存在相同KEY的的，则进行字段合并
+                                Index exist = indexMap.get(index.key());
+                                if (null != exist) {
+                                    exist.getFieldName().addAll(index.getFieldName());
+                                    return false;
+                                }
+                            }
+                            return r;
+                        })
                         .orElse(Boolean.FALSE);
                 fill(workbook.getSheet("INDEX"), indexMap, Index::parse, indexBefore);
 

@@ -1,15 +1,13 @@
 package com.thunisoft.znbq.bbq.smd.diff;
 
-import com.thunisoft.znbq.bbq.smd.sql.SqlGenerator;
+import com.thunisoft.znbq.bbq.smd.generator.SqlGenerator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;

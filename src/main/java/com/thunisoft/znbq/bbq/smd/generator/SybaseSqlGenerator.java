@@ -1,4 +1,4 @@
-package com.thunisoft.znbq.bbq.smd.sql;
+package com.thunisoft.znbq.bbq.smd.generator;
 
 import com.thunisoft.znbq.bbq.smd.diff.Column;
 import com.thunisoft.znbq.bbq.smd.diff.Index;

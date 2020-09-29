@@ -1,4 +1,4 @@
-package com.thunisoft.znbq.bbq.smd.gen;
+package com.thunisoft.znbq.bbq.smd.generator;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +16,7 @@ import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
@@ -26,17 +27,18 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
- * fixme: 这个类生成smd文件数据类型、索引类型等不统一，需要统一标准，用于SQL生成
  * @author <a href="mailto:wuzhao-1@thunisoft.com>Zhao.Wu</a>
  * @description com.thunisoft.znbq.bbq.smd Barbecue
  * @date 2020/9/27 0027 17:11
  */
 @Slf4j
-public class SmdFileGen {
+public class SmdFileGenerator {
 
     private static class GroupListTypeReference extends TypeReference<List<Group>> {}
 
@@ -51,14 +53,12 @@ public class SmdFileGen {
         });
     }
 
-    public static String buildSmd(DatabaseSnapshot snapshot, DatabaseInfo databaseInfo, List<TableFilter> filters) throws SQLException, ClassNotFoundException {
+    public static String buildSmd(DatabaseSnapshot snapshot, DatabaseInfo databaseInfo, List<TableFilter> filters) {
         String dir = snapshot.getSystemName()+"/"+snapshot.getDatabaseType()+"/"+snapshot.getVersion();
         Consumer<Connection> consumer = connection -> {
             try {
                 DatabaseMetaData metaData = connection.getMetaData();
-                // fixme 支持传入filter 和 null
-                // null 表示所有
-                List<Group> groups = getGroups(null);
+                List<Group> groups = getGroupByFilter(databaseInfo, filters);
                 File dest = new File(dir);
                 if(dest.mkdirs()) {
                     for (Group group : groups) {
@@ -70,14 +70,50 @@ public class SmdFileGen {
                 log.error(e.getMessage(), e);
             }
         };
-        switch (DatabaseType.codeOf(databaseInfo.getDatabaseType())) {
-            case SYBASE: ConnectionUtil.sybase(databaseInfo, consumer); break;
-            case ABASE: ConnectionUtil.abase(databaseInfo, consumer); break;
-            default: throw new UnsupportedOperationException("不支持的数据库类型");
-        }
+        DatabaseType.executeConsumer(databaseInfo, consumer);
         return dir;
     }
 
+    private static List<Group> getGroupByFilter(DatabaseInfo databaseInfo, List<TableFilter> filters) {
+        if (CollectionUtils.isEmpty(filters)) {
+            List<Group> groups = new LinkedList<>();
+            Consumer<Connection> consumer = connection -> {
+                try {
+                    DatabaseMetaData metaData = connection.getMetaData();
+                    ResultSet catalogs = metaData.getCatalogs();
+                    while (catalogs.next()) {
+                        String tableCat = catalogs.getString("TABLE_CAT");
+                        ResultSet tables = metaData.getTables(tableCat, null, null, new String[]{"TABLE"});
+                        List<Table> tableList = new LinkedList<>();
+                        while (tables.next()) {
+                            String name = tables.getString("TABLE_NAME");
+                            String remarks = tables.getString("REMARKS");
+                            tableList.add(new Table(tableCat, name, remarks));
+                        }
+                        groups.add(new Group("AUTO_"+tableCat, tableList));
+                    }
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            };
+
+            DatabaseType.executeConsumer(databaseInfo, consumer);
+            return groups;
+        }
+
+        return filters.stream()
+                .collect(Collectors.groupingBy(TableFilter::getGroupName))
+                .entrySet().stream()
+                .map(e -> {
+                    List<Table> tables = e.getValue().stream()
+                            .map(filter -> new Table(filter.getTableCat(), filter.getTableName(), filter.getDesc()))
+                            .collect(Collectors.toList());
+                    return new Group(e.getKey(), tables);
+                }).collect(Collectors.toList());
+    }
+
+
+    @Deprecated
     private static void buildSmd(Smd smd) throws SQLException, ClassNotFoundException {
         Consumer<Connection> consumer = connection -> {
             try {
@@ -122,7 +158,7 @@ public class SmdFileGen {
 
     private static List<Group> getGroups(Smd smd) throws IOException {
         List<Group> groups;
-        try(InputStream inputStream = SmdFileGen.class.getResourceAsStream(smd.getPath())) {
+        try(InputStream inputStream = SmdFileGenerator.class.getResourceAsStream(smd.getPath())) {
             ObjectMapper objectMapper = new ObjectMapper();
             groups = objectMapper.readValue(inputStream, new GroupListTypeReference());
         }
@@ -278,14 +314,6 @@ public class SmdFileGen {
         sheet.setDefaultColumnWidth(20);
     }
 
-    /**
-     * 构建TAB表，并返回所有的表名
-     * @param workBook
-     * @param tables
-     * @param localLoader
-     * @return
-     * @throws SQLException
-     */
     private static void buildTableSheet(HSSFWorkbook workBook, DatabaseMetaData metaData, List<com.thunisoft.znbq.bbq.smd.local.Table> tables, LocalLoader localLoader) throws SQLException {
         HSSFSheet sheet = workBook.createSheet("TAB");
         sheet.setDefaultRowHeightInPoints(20);

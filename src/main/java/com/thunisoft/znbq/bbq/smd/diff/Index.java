@@ -1,7 +1,6 @@
 package com.thunisoft.znbq.bbq.smd.diff;
 
 import lombok.Data;
-import org.springframework.util.StringUtils;
 
 import java.util.LinkedList;
 import java.util.List;
