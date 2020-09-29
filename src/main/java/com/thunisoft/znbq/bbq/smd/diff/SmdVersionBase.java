@@ -69,7 +69,11 @@ public class SmdVersionBase {
                 fill(workbook.getSheet("INDEX"), indexMap, Index::parse, indexBefore);
 
                 Function<Column, Boolean> columnBefore = column -> Optional.ofNullable(tableMap.get(column.getTableName()))
-                        .map(table -> table.getColumns().add(column))
+                        .map(table -> {
+                            boolean r = table.getColumns().add(column);
+                            column.setTableCat(table.getCatalog());
+                            return r;
+                        })
                         .orElse(Boolean.FALSE);
                 fill(workbook.getSheet("COL"), columnMap, Column::parse, columnBefore);
             } catch (IOException e) {

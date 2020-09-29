@@ -14,6 +14,7 @@ import java.util.List;
 @Data
 public class Column implements Ikey {
     private String tableName;
+    private String tableCat;
     private String name;
     private String remark;
     private boolean primaryKey;

@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -43,5 +44,9 @@ public class Index implements Ikey {
     @Override
     public String key(){
         return tableName+"#"+name;
+    }
+
+    public String fields() {
+        return String.join(",", fieldName);
     }
 }
